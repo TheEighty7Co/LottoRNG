@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lotto RNG 649 – Smart Number Picker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8f8f8;
+      color: #222;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background: #ffffff;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    header img {
+      max-width: 200px;
+      height: auto;
+    }
+
+    .draw-label {
+      margin-top: 10px;
+      font-size: 1.2rem;
+      color: #004aad;
+      font-weight: bold;
+    }
+
+    .container {
+      padding: 30px;
+      max-width: 800px;
+      margin: auto;
+    }
+
+    .rng-box {
+      background: white;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .number-ball {
+      display: inline-block;
+      background: #ddd;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      line-height: 60px;
+      font-weight: bold;
+      font-size: 1.4rem;
+      margin: 10px;
+      opacity: 1;
+      transition: all 0.3s ease-in-out;
+    }
+
+    .hot {
+      background-color: #ff5e57;
+      color: white;
+      animation: pulseGlow 1.5s infinite;
+    }
+
+    .overdue {
+      background-color: #ffa502;
+      color: white;
+    }
+
+    .neutral {
+      background-color: #2ed573;
+      color: white;
+    }
+
+    button {
+      background: #004aad;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      font-size: 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    button:hover {
+      background: #00307a;
+    }
+
+    .description {
+      margin-top: 15px;
+      font-size: 0.9rem;
+      color: #555;
+    }
+
+    @keyframes spin {
+      0%   { transform: rotateX(0deg); }
+      100% { transform: rotateX(360deg); }
+    }
+
+    .spinner {
+      animation: spin 0.5s linear infinite;
+    }
+
+    @keyframes pulseGlow {
+      0% { box-shadow: 0 0 5px rgba(255,94,87,0.7); transform: scale(1); }
+      50% { box-shadow: 0 0 20px rgba(255,94,87,1); transform: scale(1.1); }
+      100% { box-shadow: 0 0 5px rgba(255,94,87,0.7); transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <img src="lotto_rng_logo.png" alt="Lotto RNG Logo" />
+    <div class="draw-label">Smart RNG for Lotto 6/49</div>
+  </header>
+
+  <div class="container">
+
+    <!-- 📊 Live Stats Dashboard -->
+    <div class="stats-dashboard" style="background: #fff; padding: 20px; border-radius: 10px; margin-bottom: 30px; box-shadow: 0 0 10px rgba(0,0,0,0.05);">
+      <h3 style="margin-top: 0;">🎯 Live Stats Dashboard</h3>
+      <p><strong>🔥 Hot Numbers:</strong> <span id="hot-stats"></span></p>
+      <p><strong>⏳ Overdue Numbers:</strong> <span id="overdue-stats"></span></p>
+      <p><strong>🌀 Neutral Pool Count:</strong> <span id="neutral-stats"></span></p>
+    </div>
+
+    <!-- 🎰 RNG Display -->
+    <div class="rng-box">
+      <h2>Your Lucky Numbers:</h2>
+      <div id="number-display"></div>
+      <button onclick="generateNumbers()">Generate New Set</button>
+      <button id="downloadBtn" onclick="downloadCSV()" style="display: none;">Download Picks as CSV</button>
+      <div class="description">Each pick includes 3 hot 🔥, 2 overdue ⏳, and 1 random 🌀</div>
+    </div>
+  </div>
+
+  <!-- 🔊 Sound Effect -->
+  <audio id="spinSound" src="spin.mp3" preload="auto"></audio>
+
+  <script>
+    const hotNumbers = [23, 45, 15, 38, 4, 10, 48];
+    const overdueNumbers = [33, 29, 42, 3, 24, 44, 22];
+    const allNumbers = [...Array(49).keys()].map(n => n + 1);
+    const neutralPool = allNumbers.filter(n => !hotNumbers.includes(n) && !overdueNumbers.includes(n));
+
+    const spinSound = document.getElementById("spinSound");
+
+    function pickRandomFrom(array, count) {
+      const copy = [...array];
+      const result = [];
+      for (let i = 0; i < count; i++) {
+        const index = Math.floor(Math.random() * copy.length);
+        result.push(copy.splice(index, 1)[0]);
+      }
+      return result;
+    }
+
+    function smartRNGSet() {
+      const hot = pickRandomFrom(hotNumbers, 3);
+      const overdue = pickRandomFrom(overdueNumbers, 2);
+      const neutral = pickRandomFrom(neutralPool, 1);
+      return [...hot, ...overdue, ...neutral].sort((a, b) => a - b);
+    }
+
+    function generateNumbers() {
+      const display = document.getElementById("number-display");
+      display.innerHTML = '';
+      document.getElementById("downloadBtn").style.display = "none";
+
+      // Start sound
+      spinSound.currentTime = 0;
+      spinSound.play();
+
+      for (let i = 0; i < 5; i++) {
+        const row = document.createElement("div");
+        row.classList.add("row");
+        row.style.marginBottom = "20px";
+
+        const label = document.createElement("div");
+        label.textContent = `Pick ${i + 1}:`;
+        label.style.fontWeight = "bold";
+        label.style.marginBottom = "10px";
+        row.appendChild(label);
+
+        for (let j = 0; j < 6; j++) {
+          const spinnerBall = document.createElement("div");
+          spinnerBall.classList.add("number-ball", "spinner");
+          spinnerBall.textContent = "?";
+          row.appendChild(spinnerBall);
+        }
+
+        display.appendChild(row);
+      }
+
+      setTimeout(() => {
+        display.innerHTML = '';
+        for (let i = 0; i < 5; i++) {
+          const numbers = smartRNGSet();
+          const row = document.createElement("div");
+          row.classList.add("row");
+          row.style.marginBottom = "20px";
+
+          const label = document.createElement("div");
+          label.textContent = `Pick ${i + 1}:`;
+          label.style.fontWeight = "bold";
+          label.style.marginBottom = "10px";
+          row.appendChild(label);
+
+          numbers.forEach((num) => {
+            const ball = document.createElement("div");
+            ball.classList.add("number-ball");
+
+            if (hotNumbers.includes(num)) ball.classList.add("hot");
+            else if (overdueNumbers.includes(num)) ball.classList.add("overdue");
+            else ball.classList.add("neutral");
+
+            ball.textContent = num;
+            row.appendChild(ball);
+          });
+
+          display.appendChild(row);
+        }
+
+        // Stop sound + Show CSV download
+        spinSound.pause();
+        spinSound.currentTime = 0;
+        document.getElementById("downloadBtn").style.display = "inline-block";
+      }, 3000);
+    }
+
+    function downloadCSV() {
+      const rows = [["Pick #", "Num1", "Num2", "Num3", "Num4", "Num5", "Num6"]];
+      const allPicks = document.querySelectorAll("#number-display .row");
+
+      allPicks.forEach((row, index) => {
+        const nums = Array.from(row.querySelectorAll(".number-ball")).map(el => el.textContent);
+        rows.push([`Pick ${index + 1}`, ...nums]);
+      });
+
+      const csvContent = rows.map(e => e.join(",")).join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "lotto_649_picks.csv";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function updateStatsDashboard() {
+      document.getElementById("hot-stats").textContent = hotNumbers.join(', ');
+      document.getElementById("overdue-stats").textContent = overdueNumbers.join(', ');
+      document.getElementById("neutral-stats").textContent = neutralPool.length;
+    }
+
+    updateStatsDashboard();
+    generateNumbers();
+  </script>
+</body>
+</html>
